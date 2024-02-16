@@ -141,8 +141,14 @@ export default createRule<Options, MessageIds>({
             node.id,
             `type ${node.id.name}${genericTypes} = `,
             ';',
-            !node.extends.length,
+            node.extends.length === 0,
           );
+        },
+        TSMappedType(node): void {
+          context.report({
+            node,
+            messageId: 'preferRecord',
+          });
         },
       }),
     };

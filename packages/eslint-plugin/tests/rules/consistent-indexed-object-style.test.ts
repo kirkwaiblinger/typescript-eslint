@@ -393,5 +393,21 @@ interface Foo {
       output: 'function foo(): { [key: string]: any } {}',
       errors: [{ messageId: 'preferIndexSignature', line: 1, column: 17 }],
     },
+
+    {
+      code: `
+type Option = 'red' | 'yellow';
+const optionToString: { [key in Option]: string } = {
+  red: 'this is red',
+};
+      `,
+      options: ['record'],
+      errors: [
+        {
+          messageId: 'preferRecord',
+          line: 3,
+        },
+      ],
+    },
   ],
 });
