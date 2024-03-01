@@ -131,6 +131,10 @@ ruleTester.run('no-useless-template-literals', rule, {
     noFormat`
       \`with windows \r new line\`;
     `,
+
+    `
+\`not a useless \${String.raw\`nested interpolation \${a}\`}\`;
+    `,
   ],
 
   invalid: [
@@ -141,8 +145,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 5,
+          column: 2,
+          endColumn: 6,
         },
       ],
     },
@@ -153,8 +157,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 6,
+          column: 2,
+          endColumn: 7,
         },
       ],
     },
@@ -165,8 +169,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 7,
+          column: 2,
+          endColumn: 8,
         },
       ],
     },
@@ -218,8 +222,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 8,
+          column: 2,
+          endColumn: 9,
         },
       ],
     },
@@ -241,8 +245,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 8,
+          column: 2,
+          endColumn: 9,
         },
       ],
     },
@@ -264,8 +268,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 13,
+          column: 2,
+          endColumn: 14,
         },
       ],
     },
@@ -287,8 +291,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 12,
+          column: 2,
+          endColumn: 13,
         },
       ],
     },
@@ -300,8 +304,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 7,
+          column: 2,
+          endColumn: 8,
         },
       ],
     },
@@ -313,14 +317,14 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 7,
+          column: 2,
+          endColumn: 8,
         },
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 11,
-          endColumn: 14,
+          column: 9,
+          endColumn: 15,
         },
       ],
     },
@@ -351,8 +355,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 3,
-          column: 17,
-          endColumn: 20,
+          column: 15,
+          endColumn: 21,
         },
       ],
     },
@@ -364,8 +368,8 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 5,
-          endColumn: 8,
+          column: 3,
+          endColumn: 9,
         },
       ],
     },
@@ -377,14 +381,14 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 13,
+          column: 2,
+          endColumn: 14,
         },
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 17,
-          endColumn: 18,
+          column: 15,
+          endColumn: 19,
         },
       ],
     },
@@ -396,14 +400,14 @@ ruleTester.run('no-useless-template-literals', rule, {
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 4,
-          endColumn: 7,
+          column: 2,
+          endColumn: 8,
         },
         {
           messageId: 'noUselessTemplateLiteral',
           line: 1,
-          column: 11,
-          endColumn: 15,
+          column: 9,
+          endColumn: 16,
         },
       ],
     },
@@ -552,6 +556,57 @@ ruleTester.run('no-useless-template-literals', rule, {
       errors: [
         {
           messageId: 'noUselessTemplateLiteral',
+        },
+      ],
+    },
+
+    {
+      code: "`use${'less'}`;",
+      output: '`useless`;',
+      errors: [
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 1,
+        },
+      ],
+    },
+
+    {
+      code: noFormat`
+\`u\${
+  // hopefully this comment is not needed.
+  'se'
+
+}\${
+  \`le\${  \`ss\`  }\`
+}\`;
+      `,
+      output: `
+\`use\${
+  \`less\`
+}\`;
+      `,
+      errors: [
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 2,
+          column: 3,
+          endLine: 6,
+          endColumn: 2,
+        },
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 6,
+          column: 2,
+          endLine: 8,
+          endColumn: 2,
+        },
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 7,
+          column: 6,
+          endLine: 7,
+          endColumn: 17,
         },
       ],
     },

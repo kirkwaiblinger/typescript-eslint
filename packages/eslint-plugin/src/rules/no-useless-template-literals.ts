@@ -109,34 +109,44 @@ export default createRule<[], MessageId>({
           return;
         }
 
-        const fixableExpressions = node.expressions.filter(
-          (expression): expression is TSESTree.Literal | TSESTree.Identifier =>
+        const fixableExpressions: {
+          expression: TSESTree.Expression;
+          prevQuasi: TSESTree.TemplateElement;
+          nextQuasi: TSESTree.TemplateElement;
+        }[] = [];
+
+        for (const [index, expression] of node.expressions.entries()) {
+          if (
             isLiteral(expression) ||
             isUndefinedIdentifier(expression) ||
             isInfinityIdentifier(expression) ||
-            isNaNIdentifier(expression),
-        );
+            isNaNIdentifier(expression) ||
+            expression.type === AST_NODE_TYPES.TemplateLiteral
+          ) {
+            fixableExpressions.push({
+              expression,
+              prevQuasi: node.quasis[index],
+              nextQuasi: node.quasis[index + 1],
+            });
+          }
+        }
 
-        fixableExpressions.forEach(expression => {
+        for (const { expression, prevQuasi, nextQuasi } of fixableExpressions) {
+          const dollarSignStartIndex = prevQuasi.range[1] - 2;
+          const closingBraceIndex = nextQuasi.range[0];
+
           context.report({
-            node: expression,
+            loc: {
+              start: context.sourceCode.getLocFromIndex(dollarSignStartIndex),
+              end: context.sourceCode.getLocFromIndex(closingBraceIndex + 1),
+            },
             messageId: 'noUselessTemplateLiteral',
             fix(fixer): TSESLint.RuleFix[] {
-              const index = node.expressions.indexOf(expression);
-              const prevQuasi = node.quasis[index];
-              const nextQuasi = node.quasis[index + 1];
-
               // Remove the quasis' parts that are related to the current expression.
               const fixes = [
-                fixer.removeRange([
-                  prevQuasi.range[1] - 2,
-                  expression.range[0],
-                ]),
+                fixer.removeRange([dollarSignStartIndex, expression.range[0]]),
 
-                fixer.removeRange([
-                  expression.range[1],
-                  nextQuasi.range[0] + 1,
-                ]),
+                fixer.removeRange([expression.range[1], closingBraceIndex + 1]),
               ];
 
               const stringValue = getStaticStringValue(expression);
@@ -145,12 +155,25 @@ export default createRule<[], MessageId>({
                 const escapedValue = stringValue.replace(/([`$\\])/g, '\\$1');
 
                 fixes.push(fixer.replaceText(expression, escapedValue));
+              } else if (expression.type === AST_NODE_TYPES.TemplateLiteral) {
+                // Note that some template literals get handled in the previous branch too.
+                // Remove the beginning and trailing backtick characters.
+                fixes.push(
+                  fixer.removeRange([
+                    expression.range[0],
+                    expression.range[0] + 1,
+                  ]),
+                  fixer.removeRange([
+                    expression.range[1] - 1,
+                    expression.range[1],
+                  ]),
+                );
               }
 
               return fixes;
             },
           });
-        });
+        }
       },
     };
   },
