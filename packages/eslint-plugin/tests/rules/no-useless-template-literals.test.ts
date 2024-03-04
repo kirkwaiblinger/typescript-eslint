@@ -131,6 +131,10 @@ ruleTester.run('no-useless-template-literals', rule, {
     noFormat`
       \`with windows \r new line\`;
     `,
+
+    `
+\`not a useless \${String.raw\`nested interpolation \${a}\`}\`;
+    `,
   ],
 
   invalid: [
@@ -552,6 +556,68 @@ ruleTester.run('no-useless-template-literals', rule, {
       errors: [
         {
           messageId: 'noUselessTemplateLiteral',
+        },
+      ],
+    },
+
+    {
+      code: "`use${'less'}`;",
+      output: '`useless`;',
+      errors: [
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 1,
+        },
+      ],
+    },
+
+    {
+      code: `
+declare const nested: string, interpolation: string;
+\`use\${\`less\${nested}\${interpolation}\`}\`;
+      `,
+      output: `
+declare const nested: string, interpolation: string;
+\`useless\${nested}\${interpolation}\`;
+      `,
+      errors: [
+        {
+          messageId: 'noUselessTemplateLiteral',
+        },
+      ],
+    },
+
+    {
+      code: noFormat`
+\`u\${
+  // hopefully this comment is not needed.
+  'se'
+
+}\${
+  \`le\${  \`ss\`  }\`
+}\`;
+      `,
+      output: `
+\`use\${
+  \`less\`
+}\`;
+      `,
+      errors: [
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 4,
+        },
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 7,
+          column: 3,
+          endLine: 7,
+        },
+        {
+          messageId: 'noUselessTemplateLiteral',
+          line: 7,
+          column: 10,
+          endLine: 7,
         },
       ],
     },

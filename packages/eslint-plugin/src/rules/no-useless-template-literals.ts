@@ -110,11 +110,12 @@ export default createRule<[], MessageId>({
         }
 
         const fixableExpressions = node.expressions.filter(
-          (expression): expression is TSESTree.Literal | TSESTree.Identifier =>
+          expression =>
             isLiteral(expression) ||
             isUndefinedIdentifier(expression) ||
             isInfinityIdentifier(expression) ||
-            isNaNIdentifier(expression),
+            isNaNIdentifier(expression) ||
+            expression.type === AST_NODE_TYPES.TemplateLiteral,
         );
 
         fixableExpressions.forEach(expression => {
@@ -145,6 +146,19 @@ export default createRule<[], MessageId>({
                 const escapedValue = stringValue.replace(/([`$\\])/g, '\\$1');
 
                 fixes.push(fixer.replaceText(expression, escapedValue));
+              } else if (expression.type === AST_NODE_TYPES.TemplateLiteral) {
+                // Note that some template literals get handled in the previous branch too.
+                // Remove the beginning and trailing backtick characters.
+                fixes.push(
+                  fixer.removeRange([
+                    expression.range[0],
+                    expression.range[0] + 1,
+                  ]),
+                  fixer.removeRange([
+                    expression.range[1] - 1,
+                    expression.range[1],
+                  ]),
+                );
               }
 
               return fixes;
