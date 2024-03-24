@@ -719,5 +719,24 @@ interface WithOverloading {
         },
       ],
     },
+    {
+      code: `
+interface WithOverloading {
+  overloaded(iDontUseThis: number): number;
+  overloaded(iDoUseThis: string): this;
+}
+      `,
+      errors: [
+        /* Doesn't pass. */
+        {
+          messageId: 'errorMethodThis',
+          line: 3,
+        },
+        {
+          messageId: 'errorMethodThis',
+          line: 4,
+        },
+      ],
+    },
   ],
 });
