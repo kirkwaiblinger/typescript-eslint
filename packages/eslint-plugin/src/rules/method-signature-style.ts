@@ -11,7 +11,7 @@ import {
 } from '../util';
 
 export type Options = [('method' | 'property')?];
-export type MessageIds = 'errorMethod' | 'errorProperty';
+export type MessageIds = 'errorMethod' | 'errorProperty' | 'errorMethodThis';
 
 export default createRule<Options, MessageIds>({
   name: 'method-signature-style',
@@ -26,6 +26,9 @@ export default createRule<Options, MessageIds>({
         'Shorthand method signature is forbidden. Use a function property instead.',
       errorProperty:
         'Function property signature is forbidden. Use a method shorthand instead.',
+      errorMethodThis:
+        'Function property signature is forbidden. Use a method shorthand instead.' +
+        ' If you need the `this` type, consider using a disable comment.',
     },
     schema: [
       {
@@ -124,8 +127,17 @@ export default createRule<Options, MessageIds>({
 
     function checkMethodSignature(
       methodNode: TSESTree.TSMethodSignature,
+      usesThis: boolean,
     ): void {
       if (methodNode.kind !== 'method') {
+        return;
+      }
+
+      if (usesThis) {
+        context.report({
+          node: methodNode,
+          messageId: 'errorMethodThis',
+        });
         return;
       }
 
@@ -218,8 +230,12 @@ export default createRule<Options, MessageIds>({
 
     return {
       ...(mode === 'property' && {
-        TSMethodSignature(methodNode): void {
-          checkMethodSignature(methodNode);
+        'TSMethodSignature:has(TSThisType)'(methodNode): void {
+          return checkMethodSignature(methodNode, true);
+        },
+
+        'TSMethodSignature:not(:has(TSThisType))'(methodNode): void {
+          return checkMethodSignature(methodNode, false);
         },
       }),
       ...(mode === 'method' && {

@@ -671,5 +671,72 @@ interface MyInterface {
         },
       ],
     },
+    {
+      code: `
+interface MyInterface {
+  methodUsingThis(): this;
+}
+      `,
+      errors: [
+        {
+          messageId: 'errorMethodThis',
+          line: 3,
+        },
+      ],
+    },
+    {
+      code: `
+interface MyInterface {
+  a<T>(): T extends string
+    ? Readonly<Array<this>>
+    : T extends number
+      ? this
+      : never;
+}
+      `,
+      errors: [
+        {
+          messageId: 'errorMethodThis',
+          line: 3,
+        },
+      ],
+    },
+    {
+      code: `
+interface WithOverloading {
+  overloaded(): this;
+  overloaded(a: string): this;
+}
+      `,
+      errors: [
+        {
+          messageId: 'errorMethodThis',
+          line: 3,
+        },
+        {
+          messageId: 'errorMethodThis',
+          line: 4,
+        },
+      ],
+    },
+    {
+      code: `
+interface WithOverloading {
+  overloaded(iDontUseThis: number): number;
+  overloaded(iDoUseThis: string): this;
+}
+      `,
+      errors: [
+        /* Doesn't pass. */
+        {
+          messageId: 'errorMethodThis',
+          line: 3,
+        },
+        {
+          messageId: 'errorMethodThis',
+          line: 4,
+        },
+      ],
+    },
   ],
 });
