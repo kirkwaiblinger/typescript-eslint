@@ -1,6 +1,6 @@
 import { RuleTester } from '@typescript-eslint/rule-tester';
 
-import rule from '../../src/rules/prefer-array-at';
+import rule from '../../src/rules/no-index-access-widening-assertion';
 import { getFixturesRootDir } from '../RuleTester';
 
 const rootDir = getFixturesRootDir();

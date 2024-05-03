@@ -11,14 +11,15 @@ import {
 } from '../util';
 
 export default createRule({
-  name: 'prefer-array-at',
+  name: 'no-index-access-widening-assertion',
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Enforce the use of `Array#at` over `Array#[]`',
+      description:
+        'Enforce the use of `array.at(i)` over `array[i] as typeof array | undefined`',
     },
     messages: {
-      preferArrayAt: 'Expected `Array#at` instead of `Array#[]`.',
+      preferArrayAt: 'Forbidden widening assertion of array index access.',
       useArrayAtSuggestion: 'Use `Array#at` instead.',
     },
     hasSuggestions: true,
