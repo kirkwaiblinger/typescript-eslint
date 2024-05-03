@@ -82,8 +82,11 @@ export default createRule({
         if (
           !(
             isIntrinsicNumberType(indexType) ||
-            unionTypeParts(indexType).every(unionPart =>
-              unionPart.isNumberLiteral(),
+            unionTypeParts(indexType).every(
+              unionPart =>
+                unionPart.isNumberLiteral() &&
+                Number.isInteger(unionPart.value) &&
+                unionPart.value >= 0,
             )
           )
         ) {
