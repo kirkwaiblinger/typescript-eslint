@@ -19,6 +19,20 @@ ruleTester.run('prefer-array-at', rule, {
 declare const nums: Array<number>;
 const maybeNum = nums['length'] as number | undefined;
     `,
+    `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray.array?.[index] as undefined | number;
+    `,
+    `
+declare const index: 12 | 13 | 'length';
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array[index] as undefined | number;
+    `,
   ],
   invalid: [
     {
@@ -61,6 +75,140 @@ const maybeNum = nums[index] as undefined | number;
 declare const nums: Array<number>;
 declare const index: number;
 const maybeNum = nums.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray.array[index] as undefined | number;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 6,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray.array.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array[index] as undefined | number;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 6,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array[12] as undefined | number;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 6,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const index: number;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array.at(12);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const index: 12 | 13;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array[index] as undefined | number;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 6,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const index: 12 | 13;
+const objectWithArray = {
+  array: [1, 2, 3],
+};
+const maybeNum = objectWithArray?.array.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const arr1: Array<number>;
+declare const arr2: Array<number>;
+declare const index: number;
+const maybeNum = (Math.random() > 0.5 ? arr1 : arr2)[index] as
+  | number
+  | undefined;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const arr1: Array<number>;
+declare const arr2: Array<number>;
+declare const index: number;
+const maybeNum = (Math.random() > 0.5 ? arr1 : arr2).at(index);
       `,
             },
           ],

@@ -1,11 +1,12 @@
 import type { TSESTree } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { isIntrinsicNumberType } from 'ts-api-utils';
+import { isIntrinsicNumberType, unionTypeParts } from 'ts-api-utils';
 
 import {
   createRule,
   getConstrainedTypeAtLocation,
   getParserServices,
+  getWrappingFixer,
   nullThrows,
 } from '../util';
 
@@ -44,11 +45,14 @@ export default createRule({
         // 2. replaces the index access with the at method of the same value
 
         const { expression, typeAnnotation } = node;
-        if (expression.type !== AST_NODE_TYPES.MemberExpression) {
+        let memberExpression = expression;
+        while (memberExpression.type === AST_NODE_TYPES.ChainExpression) {
+          memberExpression = memberExpression.expression;
+        }
+        if (memberExpression.type !== AST_NODE_TYPES.MemberExpression) {
           return;
         }
 
-        const memberExpression = expression;
         if (!memberExpression.computed || memberExpression.optional) {
           return;
         }
@@ -74,8 +78,14 @@ export default createRule({
           return;
         }
 
+        const indexType = getConstrainedTypeAtLocation(services, index);
         if (
-          !isIntrinsicNumberType(getConstrainedTypeAtLocation(services, index))
+          !(
+            isIntrinsicNumberType(indexType) ||
+            unionTypeParts(indexType).every(unionPart =>
+              unionPart.isNumberLiteral(),
+            )
+          )
         ) {
           return;
         }
@@ -108,16 +118,12 @@ export default createRule({
           suggest: [
             {
               messageId: 'useArrayAtSuggestion',
-              fix: fixer => {
-                const indexText = context.sourceCode.getText(index);
-                const objectText = context.sourceCode.getText(
-                  memberExpression.object,
-                );
-                return fixer.replaceText(
-                  node,
-                  `${objectText}.at(${indexText})`,
-                );
-              },
+              fix: getWrappingFixer({
+                sourceCode: context.sourceCode,
+                node,
+                innerNode: [memberExpression.object, index],
+                wrap: (object, index) => `${object}.at(${index})`,
+              }),
             },
           ],
         });
