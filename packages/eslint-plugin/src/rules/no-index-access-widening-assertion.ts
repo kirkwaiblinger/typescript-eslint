@@ -1,6 +1,7 @@
 import type { TSESTree } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import { isIntrinsicNumberType, unionTypeParts } from 'ts-api-utils';
+import type * as ts from 'typescript';
 
 import {
   createRule,
@@ -30,6 +31,40 @@ export default createRule({
   create(context) {
     const services = getParserServices(context);
     const checker = services.program.getTypeChecker();
+
+    function typesAreMutuallyAssignable(a: ts.Type, b: ts.Type): boolean {
+      return (
+        checker.isTypeAssignableTo(a, b) && checker.isTypeAssignableTo(b, a)
+      );
+    }
+
+    function isTypeBTheUnionOfTypeAAndUndefined(
+      a: ts.Type,
+      b: ts.Type,
+    ): boolean {
+      const nonnullableA = checker.getNonNullableType(a);
+      const nonnullableB = checker.getNonNullableType(b);
+      if (!typesAreMutuallyAssignable(nonnullableA, nonnullableB)) {
+        return false;
+      }
+
+      const isBUndefinable = checker.isTypeAssignableTo(
+        checker.getUndefinedType(),
+        b,
+      );
+      if (!isBUndefinable) {
+        return false;
+      }
+
+      const isANullable = checker.isTypeAssignableTo(checker.getNullType(), a);
+      const isBNullable = checker.isTypeAssignableTo(checker.getNullType(), b);
+      if (isANullable !== isBNullable) {
+        return false;
+      }
+
+      return true;
+    }
+
     return {
       'TSAsExpression, TSTypeAssertion'(
         node: TSESTree.TSAsExpression | TSESTree.TSTypeAssertion,
@@ -45,7 +80,7 @@ export default createRule({
         // 1. removes the type assertion
         // 2. replaces the index access with the at method of the same value
 
-        const { expression, typeAnnotation } = node;
+        const expression = node.expression;
         let memberExpression = expression;
         while (memberExpression.type === AST_NODE_TYPES.ChainExpression) {
           memberExpression = memberExpression.expression;
@@ -59,25 +94,6 @@ export default createRule({
         }
 
         const index = memberExpression.property;
-
-        if (typeAnnotation.type !== AST_NODE_TYPES.TSUnionType) {
-          return;
-        }
-
-        const unionParts = typeAnnotation.types;
-
-        if (unionParts.length !== 2) {
-          return;
-        }
-        let nonUndefinedPart: TSESTree.TypeNode | undefined;
-        for (const part of unionParts) {
-          if (context.sourceCode.getText(part) !== 'undefined') {
-            nonUndefinedPart = part;
-          }
-        }
-        if (nonUndefinedPart == null) {
-          return;
-        }
 
         const indexType = getConstrainedTypeAtLocation(services, index);
         if (
@@ -109,10 +125,10 @@ export default createRule({
 
         const assertedType = getConstrainedTypeAtLocation(
           services,
-          nonUndefinedPart,
+          node.typeAnnotation,
         );
 
-        if (assertedType !== elementType) {
+        if (!isTypeBTheUnionOfTypeAAndUndefined(elementType, assertedType)) {
           return;
         }
 

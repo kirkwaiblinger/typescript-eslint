@@ -76,6 +76,52 @@ const maybeNum = nums.at(index);
     },
     {
       code: `
+declare const nums: Array<number | string>;
+declare const index: number;
+const maybeNum = nums[index] as number | string | undefined;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 4,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const nums: Array<number | string>;
+declare const index: number;
+const maybeNum = nums.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
+declare const nums: Array<number | string>;
+declare const index: number;
+const maybeNum = nums[index] as (typeof nums)[typeof index] | undefined;
+      `,
+      errors: [
+        {
+          messageId: 'preferArrayAt',
+          line: 4,
+          suggestions: [
+            {
+              messageId: 'useArrayAtSuggestion',
+              output: `
+declare const nums: Array<number | string>;
+declare const index: number;
+const maybeNum = nums.at(index);
+      `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: `
 declare const nums: Array<number>;
 declare const index: number;
 const maybeNum = <number | undefined>nums[index];
