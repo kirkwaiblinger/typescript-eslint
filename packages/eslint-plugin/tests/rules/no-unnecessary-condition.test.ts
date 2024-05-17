@@ -852,6 +852,14 @@ type Foo = { [key: string]: () => number | undefined } | null;
 declare const foo: Foo;
 foo?.['bar']()?.toExponential();
     `,
+    `
+declare let foo: {};
+foo ||= 1;
+    `,
+    `
+declare let foo: {};
+foo &&= 1;
+    `,
   ],
   invalid: [
     // Ensure that it's checking in all the right places
@@ -2055,22 +2063,6 @@ foo ??= null;
     },
     {
       code: `
-declare let foo: {};
-foo ||= 1;
-      `,
-      output: null,
-      errors: [
-        {
-          messageId: 'alwaysTruthy',
-          line: 3,
-          endLine: 3,
-          column: 1,
-          endColumn: 4,
-        },
-      ],
-    },
-    {
-      code: `
 declare let foo: null;
 foo ||= null;
       `,
@@ -2078,22 +2070,6 @@ foo ||= null;
       errors: [
         {
           messageId: 'alwaysFalsy',
-          line: 3,
-          endLine: 3,
-          column: 1,
-          endColumn: 4,
-        },
-      ],
-    },
-    {
-      code: `
-declare let foo: {};
-foo &&= 1;
-      `,
-      output: null,
-      errors: [
-        {
-          messageId: 'alwaysTruthy',
           line: 3,
           endLine: 3,
           column: 1,

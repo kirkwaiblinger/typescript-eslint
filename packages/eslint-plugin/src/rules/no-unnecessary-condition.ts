@@ -20,24 +20,16 @@ import {
 
 // Truthiness utilities
 // #region
-const isTruthyLiteral = (type: ts.Type): boolean =>
-  tsutils.isTrueLiteralType(type) ||
-  //  || type.
-  (type.isLiteral() && !!type.value);
+function isTruthyLiteral(type: ts.Type): boolean {
+  return (
+    tsutils.isTrueLiteralType(type) ||
+    //  || type.
+    (type.isLiteral() && !!type.value)
+  );
+}
 
-const isPossiblyFalsy = (type: ts.Type): boolean =>
-  tsutils
-    .unionTypeParts(type)
-    // Intersections like `string & {}` can also be possibly falsy,
-    // requiring us to look into the intersection.
-    .flatMap(type => tsutils.intersectionTypeParts(type))
-    // PossiblyFalsy flag includes literal values, so exclude ones that
-    // are definitely truthy
-    .filter(t => !isTruthyLiteral(t))
-    .some(type => isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy));
-
-const isPossiblyTruthy = (type: ts.Type): boolean =>
-  tsutils
+function isPossiblyTruthy(type: ts.Type): boolean {
+  return tsutils
     .unionTypeParts(type)
     .map(type => tsutils.intersectionTypeParts(type))
     .some(intersectionParts =>
@@ -45,6 +37,7 @@ const isPossiblyTruthy = (type: ts.Type): boolean =>
       // like `"" & { __brand: string }`.
       intersectionParts.every(type => !tsutils.isFalsyType(type)),
     );
+}
 
 // Nullish utilities
 const nullishFlag = ts.TypeFlags.Undefined | ts.TypeFlags.Null;
@@ -160,6 +153,41 @@ export default createRule<Options, MessageId>({
       'strictNullChecks',
     );
 
+    // Missing 0n.
+    const falsyTypes = [
+      {
+        value: null,
+        type: checker.getNullType(),
+      },
+      {
+        value: undefined,
+        type: checker.getUndefinedType(),
+      },
+      {
+        value: false,
+        type: checker.getFalseType(),
+      },
+      {
+        value: '',
+        type: checker.getStringLiteralType(''),
+      },
+      {
+        value: 0,
+        type: checker.getNumberLiteralType(0),
+      },
+      {
+        value: -0,
+        type: checker.getNumberLiteralType(-0),
+      },
+      {
+        value: NaN,
+        type: checker.getNumberLiteralType(NaN),
+      },
+    ] as const satisfies {
+      value: unknown;
+      type: ts.Type;
+    }[];
+
     if (
       !isStrictNullChecks &&
       allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing !== true
@@ -171,6 +199,52 @@ export default createRule<Options, MessageId>({
         },
         messageId: 'noStrictNullCheck',
       });
+    }
+
+    function isPossiblyFalsy(type: ts.Type):
+      | undefined
+      | {
+          falsyFlagSet: boolean;
+          assignableFalsyValues: unknown[];
+        } {
+      const falsyFlagSet = tsutils
+        .unionTypeParts(type)
+        // Intersections like `string & {}` can also be possibly falsy,
+        // requiring us to look into the intersection.
+        .flatMap(type => tsutils.intersectionTypeParts(type))
+        // PossiblyFalsy flag includes literal values, so exclude ones that
+        // are definitely truthy
+        .filter(t => !isTruthyLiteral(t))
+        .some(type => isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy));
+
+      const assignableFalsyValues: unknown[] = [];
+
+      for (const { value, type: falsyType } of falsyTypes) {
+        if (
+          !isStrictNullChecks &&
+          allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing !== true
+        ) {
+          if (value == null) {
+            continue;
+          }
+        }
+
+        if (
+          tsutils
+            .unionTypeParts(type)
+            .flatMap(type => tsutils.intersectionTypeParts(type))
+            .some(type => checker.isTypeAssignableTo(falsyType, type))
+        ) {
+          assignableFalsyValues.push(value);
+        }
+      }
+
+      return falsyFlagSet || assignableFalsyValues.length !== 0
+        ? {
+            falsyFlagSet,
+            assignableFalsyValues,
+          }
+        : undefined;
     }
 
     function nodeIsArrayType(node: TSESTree.Expression): boolean {
