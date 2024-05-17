@@ -49,6 +49,22 @@ const maybeNum = nums[index] as number | undefined;
     `
 [1, 2, 3][0] as number;
     `,
+    `
+[1, undefined, 3][0] as number;
+    `,
+    {
+      code: `
+const x = -1;
+[1, 2, 3][x] as number | undefined;
+      `,
+    },
+    `
+[1, null, 3][0] as number | undefined;
+    `,
+    // doesn't actually widen the type. This is just an unnecessary assertion.
+    `
+[1, undefined, 3][0] as number | undefined;
+    `,
   ],
   invalid: [
     {

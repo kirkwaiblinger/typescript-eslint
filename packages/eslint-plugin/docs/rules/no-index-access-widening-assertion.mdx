@@ -1,5 +1,5 @@
 ---
-description: '<Description from rule metadata here>'
+description: 'Enforce the use of `array.at(i)` over `array[i] as (typeof array[i]) | undefined`.'
 ---
 
 import Tabs from '@theme/Tabs';
@@ -7,26 +7,43 @@ import TabItem from '@theme/TabItem';
 
 > 🛑 This file is source code, not the primary documentation location! 🛑
 >
-> See **https://typescript-eslint.io/rules/RULE_NAME_REPLACEME** for documentation.
+> See **https://typescript-eslint.io/rules/no-index-access-widening-assertion** for documentation.
 
-This rule reports when a type assertion is used to indicate that an array access may produce undefined due to the index being out of bounds.
+This rule reports when a type assertion is used to indicate that an array access may produce `undefined` due to the index being out of bounds.
+
+In TypeScript, accessing an array with the `array[i]` assumes that the index `i` is within the array bounds and does not add `undefined` to the type of the expression.
+In reality, the index may not be valid, however, in which case the expression will produce `undefined`.
+While this may be indicated by using a type assertion (`[1, 2, 3][i] as number | undefined`), it's considered best practice to avoid type assertions when possible.
+This rule aims to enforce the use of `array.at(i)` instead of a potentially type assertion to indicate that the index may be out of bounds, since `array.at(i)` is typed to include `undefined` in the return type.
+
+:::warning
+Using `array.at(i)` has different runtime behavior than `array[i]`.
+Most notably, `array.at(i)` will treat negative indices as counting from the end of the array, whereas `array[i]` will treat negative indices as invalid and produce `undefined`.
+When changing code from `array[i]` to `array.at(i)`, as this rule suggests, be sure to consider potential changes in behavior.
+:::
 
 ## Examples
-
-To fill out: tell us more about this rule.
 
 <Tabs>
 <TabItem value="❌ Incorrect">
 
 ```ts
-// To fill out: incorrect code
+const randomIntegerFrom0To9 = Math.floor(Math.random() * 10);
+
+const mightOverflowArray = ['only', 'three', 'elements'][
+  randomIntegerFrom0To9
+] as string | undefined;
 ```
 
 </TabItem>
 <TabItem value="✅ Correct">
 
 ```ts
-// To fill out: correct code
+const randomIntegerFrom0To9 = Math.floor(Math.random() * 10);
+
+const mightOverflowArray = ['only', 'three', 'elements'].at(
+  randomIntegerFrom0To9,
+);
 ```
 
 </TabItem>
@@ -34,5 +51,10 @@ To fill out: tell us more about this rule.
 
 ## When Not To Use It
 
-To fill out: why wouldn't you want to use this rule?
-For example if this rule requires a feature released in a certain TS version.
+If you aren't concerned about the avoidable type assertion, or you have a reason to prefer the runtime behavior of `array[i]` over `array.at(i)`, you can safely disable this rule.
+Additionally, projects using the TS compiler option `noUncheckedIndexedAccess` do not need this rule.
+Instead, the type assertions that would be reported by this rule may instead be flagged and removed by [`no-unnecessary-type-assertion`](./no-unnecessary-type-assertion.mdx).
+
+## Further Reading
+
+- TS compiler option [noUncheckedIndexedAccess](https://www.typescriptlang.org/tsconfig/#noUncheckedIndexedAccess)

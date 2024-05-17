@@ -1,12 +1,13 @@
 import type { TSESTree } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import { isIntrinsicNumberType, unionTypeParts } from 'ts-api-utils';
-import type * as ts from 'typescript';
+import * as tsutils from 'ts-api-utils';
+import * as ts from 'typescript';
 
 import {
   createRule,
   getConstrainedTypeAtLocation,
   getParserServices,
+  getStaticValue,
   getWrappingFixer,
   nullThrows,
 } from '../util';
@@ -17,7 +18,7 @@ export default createRule({
     type: 'suggestion',
     docs: {
       description:
-        'Enforce the use of `array.at(i)` over `array[i] as typeof array | undefined`',
+        'Enforce the use of `array.at(i)` over `array[i] as (typeof array[i]) | undefined',
     },
     messages: {
       preferArrayAt: 'Forbidden widening assertion of array index access.',
@@ -38,31 +39,43 @@ export default createRule({
       );
     }
 
-    function isTypeBTheUnionOfTypeAAndUndefined(
+    function isUndefinable(type: ts.Type): boolean {
+      return tsutils
+        .unionTypeParts(type)
+        .some(type => tsutils.isTypeFlagSet(type, ts.TypeFlags.Undefined));
+    }
+
+    function isNullable(type: ts.Type): boolean {
+      return tsutils
+        .unionTypeParts(type)
+        .some(type => tsutils.isTypeFlagSet(type, ts.TypeFlags.Null));
+    }
+
+    function isTypeBTheDisjointUnionOfTypeAAndUndefined(
       a: ts.Type,
       b: ts.Type,
     ): boolean {
-      const nonnullableA = checker.getNonNullableType(a);
-      const nonnullableB = checker.getNonNullableType(b);
-      if (!typesAreMutuallyAssignable(nonnullableA, nonnullableB)) {
+      const isAUndefinable = isUndefinable(a);
+      // if type A already has undefined, it's not something we want to report
+      // for the purposes of this rule
+      if (isAUndefinable) {
         return false;
       }
 
-      const isBUndefinable = checker.isTypeAssignableTo(
-        checker.getUndefinedType(),
-        b,
-      );
+      const isBUndefinable = isUndefinable(b);
       if (!isBUndefinable) {
         return false;
       }
 
-      const isANullable = checker.isTypeAssignableTo(checker.getNullType(), a);
-      const isBNullable = checker.isTypeAssignableTo(checker.getNullType(), b);
-      if (isANullable !== isBNullable) {
+      const isANullable = isNullable(a);
+      const isBNullable = isNullable(b);
+      if (Boolean(isANullable) !== Boolean(isBNullable)) {
         return false;
       }
 
-      return true;
+      const nonnullableA = checker.getNonNullableType(a);
+      const nonnullableB = checker.getNonNullableType(b);
+      return typesAreMutuallyAssignable(nonnullableA, nonnullableB);
     }
 
     return {
@@ -95,16 +108,19 @@ export default createRule({
 
         const index = memberExpression.property;
 
+        // Don't touch it if the index looks like it might be a negative number.
         const indexType = getConstrainedTypeAtLocation(services, index);
         if (
           !(
-            isIntrinsicNumberType(indexType) ||
-            unionTypeParts(indexType).every(
-              unionPart =>
-                unionPart.isNumberLiteral() &&
-                Number.isInteger(unionPart.value) &&
-                unionPart.value >= 0,
-            )
+            tsutils.isIntrinsicNumberType(indexType) ||
+            tsutils
+              .unionTypeParts(indexType)
+              .every(
+                unionPart =>
+                  unionPart.isNumberLiteral() &&
+                  Number.isInteger(unionPart.value) &&
+                  unionPart.value >= 0,
+              )
           )
         ) {
           return;
@@ -128,7 +144,9 @@ export default createRule({
           node.typeAnnotation,
         );
 
-        if (!isTypeBTheUnionOfTypeAAndUndefined(elementType, assertedType)) {
+        if (
+          !isTypeBTheDisjointUnionOfTypeAAndUndefined(elementType, assertedType)
+        ) {
           return;
         }
 

@@ -56,6 +56,7 @@ import noFloatingPromises from './no-floating-promises';
 import noForInArray from './no-for-in-array';
 import noImpliedEval from './no-implied-eval';
 import noImportTypeSideEffects from './no-import-type-side-effects';
+import noIndexAccessWideningAssertion from './no-index-access-widening-assertion';
 import noInferrableTypes from './no-inferrable-types';
 import noInvalidThis from './no-invalid-this';
 import noInvalidVoidType from './no-invalid-void-type';
@@ -201,6 +202,7 @@ export default {
   'no-for-in-array': noForInArray,
   'no-implied-eval': noImpliedEval,
   'no-import-type-side-effects': noImportTypeSideEffects,
+  'no-index-access-widening-assertion': noIndexAccessWideningAssertion,
   'no-inferrable-types': noInferrableTypes,
   'no-invalid-this': noInvalidThis,
   'no-invalid-void-type': noInvalidVoidType,
