@@ -24,6 +24,11 @@ const optionsWithExactOptionalPropertyTypes = {
   project: './tsconfig.exactOptionalPropertyTypes.json',
 };
 
+const optionsWithDOM = {
+  tsconfigRootDir: rootDir,
+  project: './tsconfig.dom.json',
+};
+
 ruleTester.run('no-unnecessary-type-assertion', rule, {
   valid: [
     `
@@ -1066,6 +1071,18 @@ const bar = foo.a;
         },
       ],
       parserOptions: optionsWithExactOptionalPropertyTypes,
+    },
+    {
+      only: true,
+      code: 'length!;',
+      output: `length;`,
+      errors: [
+        {
+          messageId: 'unnecessaryAssertion',
+          line: 1,
+        },
+      ],
+      parserOptions: optionsWithDOM,
     },
   ],
 });
