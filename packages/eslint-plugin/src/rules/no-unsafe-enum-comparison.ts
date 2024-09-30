@@ -1,13 +1,37 @@
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import * as tsutils from 'ts-api-utils';
 import * as ts from 'typescript';
 
-import { createRule, getParserServices, getStaticValue } from '../util';
+import {
+  createRule,
+  getConstrainedTypeAtLocation,
+  getParserServices,
+  getStaticValue,
+} from '../util';
 import {
   getEnumKeyForLiteral,
   getEnumLiterals,
   getEnumTypes,
 } from './enum-utils/shared';
+
+const comparisonOperators = new Set([
+  '==',
+  '===',
+  '!=',
+  '!==',
+  '<',
+  '<=',
+  '>',
+  '>=',
+] as const);
+
+type ComparisonOperator =
+  typeof comparisonOperators extends Set<infer T> ? T : never;
+
+function isComparisonOperator(value: string): value is ComparisonOperator {
+  return comparisonOperators.has(value as ComparisonOperator);
+}
 
 /**
  * @returns Whether the right type is an unsafe comparison against any left type.
@@ -69,6 +93,7 @@ export default createRule({
         'The case statement does not have a shared enum type with the switch predicate.',
       mismatchedCondition:
         'The two values in this comparison do not have a shared enum type.',
+      mismatchedAssignment: 'Assignment and assignee should both be enums',
       replaceValueWithEnum: 'Replace with an enum value comparison.',
     },
     schema: [],
@@ -133,9 +158,11 @@ export default createRule({
     }
 
     return {
-      'BinaryExpression[operator=/^[<>!=]?={0,2}$/]'(
-        node: TSESTree.BinaryExpression,
-      ): void {
+      BinaryExpression(node: TSESTree.BinaryExpression): void {
+        if (!isComparisonOperator(node.operator)) {
+          return;
+        }
+
         const leftType = parserServices.getTypeAtLocation(node.left);
         const rightType = parserServices.getTypeAtLocation(node.right);
 
@@ -200,6 +227,69 @@ export default createRule({
             messageId: 'mismatchedCase',
             node,
           });
+        }
+      },
+
+      AssignmentExpression(node): void {
+        const leftType = parserServices.getTypeAtLocation(node.left);
+        const rightType = parserServices.getTypeAtLocation(node.right);
+        if (isMismatchedComparison(leftType, rightType)) {
+          context.report({
+            messageId: 'mismatchedAssignment',
+            node,
+          });
+        }
+      },
+
+      VariableDeclarator(node): void {
+        if (node.init == null) {
+          return;
+        }
+        const leftType = parserServices.getTypeAtLocation(node.id);
+        const rightType = parserServices.getTypeAtLocation(node.init);
+        if (isMismatchedComparison(leftType, rightType)) {
+          context.report({
+            messageId: 'mismatchedAssignment',
+            node,
+          });
+        }
+      },
+
+      CallExpression(node): void {
+        const checkableArgs = [];
+        for (const arg of node.arguments) {
+          if (arg.type === AST_NODE_TYPES.SpreadElement) {
+            break;
+          } else {
+            checkableArgs.push(arg);
+          }
+        }
+
+        if (checkableArgs.length === 0) {
+          return;
+        }
+
+        const callTsNode = parserServices.esTreeNodeToTSNodeMap.get(node);
+
+        const callSignature = typeChecker.getResolvedSignature(callTsNode);
+        if (callSignature == null) {
+          return;
+        }
+
+        for (const [i, arg] of checkableArgs.entries()) {
+          const paramType = typeChecker.getTypeOfSymbolAtLocation(
+            callSignature.parameters[i],
+            callTsNode,
+          );
+
+          const argType = getConstrainedTypeAtLocation(parserServices, arg);
+
+          if (isMismatchedComparison(paramType, argType)) {
+            context.report({
+              messageId: 'mismatchedAssignment',
+              node: arg,
+            });
+          }
         }
       },
     };

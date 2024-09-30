@@ -335,6 +335,47 @@ ruleTester.run('no-unsafe-enum-comparison', rule, {
         }
       }
     `,
+    `
+enum Fruit {
+  Apple,
+}
+let fruit: Fruit = Fruit.Apple;
+fruit = Fruit.Apple;
+    `,
+
+    `
+enum Fruit {
+  Apple,
+}
+let fruit: Fruit = Fruit.Apple;
+    `,
+    `
+enum Fruit {
+  Apple,
+}
+declare const someFruit: Fruit;
+let fruit: Fruit = someFruit;
+    `,
+
+    `
+enum Fruit {
+  Apple,
+}
+
+function froot(num: number, fruit: Fruit) {}
+
+froot(...[], 0, Fruit.Apple);
+    `,
+    // we're not clever about spread args yet
+    `
+enum Fruit {
+  Apple,
+}
+
+function froot(num: number, fruit: Fruit) {}
+
+froot(...[], 0, 0);
+    `,
   ],
   invalid: [
     {
@@ -1245,6 +1286,115 @@ ruleTester.run('no-unsafe-enum-comparison', rule, {
         }
       `,
       errors: [{ messageId: 'mismatchedCondition' }],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+let fruit: Fruit = Fruit.Apple;
+fruit = 0;
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 6,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+let fruit = Fruit.Apple;
+fruit = 0;
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 6,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+let fruit = 0;
+fruit = Fruit.Apple;
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 6,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+let fruit: Fruit = 0;
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 5,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+let fruit: number = Fruit.Apple;
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 5,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+
+function froot(fruit: Fruit) {}
+
+froot(0);
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 8,
+          column: 7,
+        },
+      ],
+    },
+    {
+      code: `
+enum Fruit {
+  Apple,
+}
+
+function froot(num: number, fruit: Fruit) {}
+
+froot(0, 0);
+      `,
+      errors: [
+        {
+          messageId: 'mismatchedAssignment',
+          line: 8,
+          column: 10,
+        },
+      ],
     },
   ],
 });
