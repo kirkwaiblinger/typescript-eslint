@@ -208,11 +208,7 @@ export function filterProperties(
   type: ParentNodeType,
   showTokens?: boolean,
 ): boolean {
-  if (
-    value === undefined ||
-    typeof value === 'function' ||
-    key.startsWith('_')
-  ) {
+  if (value == null || typeof value === 'function' || key.startsWith('_')) {
     return false;
   }
 

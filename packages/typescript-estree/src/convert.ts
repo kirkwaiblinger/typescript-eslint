@@ -121,7 +121,7 @@ export class Converter {
     this.#checkModifiers(node);
 
     const pattern = this.allowPattern;
-    if (allowPattern !== undefined) {
+    if (allowPattern != null) {
       this.allowPattern = allowPattern;
     }
 
@@ -694,7 +694,7 @@ export class Converter {
   private convertImportAttributes(
     node: ts.ImportAttributes | undefined,
   ): TSESTree.ImportAttribute[] {
-    return node === undefined
+    return node == null
       ? []
       : node.elements.map(element => this.convertChild(element));
   }
@@ -2226,7 +2226,7 @@ export class Converter {
           object,
           property,
           computed,
-          optional: node.questionDotToken !== undefined,
+          optional: node.questionDotToken != null,
         });
 
         return this.convertChainExpression(result, node);
@@ -2242,7 +2242,7 @@ export class Converter {
           object,
           property,
           computed,
-          optional: node.questionDotToken !== undefined,
+          optional: node.questionDotToken != null,
         });
 
         return this.convertChainExpression(result, node);
@@ -2278,7 +2278,7 @@ export class Converter {
           type: AST_NODE_TYPES.CallExpression,
           callee,
           arguments: args,
-          optional: node.questionDotToken !== undefined,
+          optional: node.questionDotToken != null,
           typeArguments,
         });
 
@@ -2878,7 +2878,7 @@ export class Converter {
       case SyntaxKind.TypePredicate: {
         const result = this.createNode<TSESTree.TSTypePredicate>(node, {
           type: AST_NODE_TYPES.TSTypePredicate,
-          asserts: node.assertsModifier !== undefined,
+          asserts: node.assertsModifier != null,
           parameterName: this.convertChild(node.parameterName),
           typeAnnotation: null,
         });

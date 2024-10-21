@@ -159,7 +159,7 @@ export default createRule<Options, MessageIds>({
       // We only trigger the rule if a `default` case does not exist, since that
       // would disqualify the switch statement from having cases that exactly
       // match the members of a union.
-      if (missingLiteralBranchTypes.length > 0 && defaultCase === undefined) {
+      if (missingLiteralBranchTypes.length > 0 && defaultCase == null) {
         context.report({
           node: node.discriminant,
           messageId: 'switchIsNotExhaustive',
@@ -281,7 +281,7 @@ export default createRule<Options, MessageIds>({
 
       if (
         missingLiteralBranchTypes.length === 0 &&
-        defaultCase !== undefined &&
+        defaultCase != null &&
         !containsNonLiteralType
       ) {
         context.report({
@@ -301,7 +301,7 @@ export default createRule<Options, MessageIds>({
 
       const { containsNonLiteralType, defaultCase } = switchMetadata;
 
-      if (containsNonLiteralType && defaultCase === undefined) {
+      if (containsNonLiteralType && defaultCase == null) {
         context.report({
           node: node.discriminant,
           messageId: 'switchIsNotExhaustive',

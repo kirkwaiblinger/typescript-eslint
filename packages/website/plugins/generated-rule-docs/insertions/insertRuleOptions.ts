@@ -73,7 +73,7 @@ export function insertRuleOptions(page: RuleDocsPage): void {
     page.spliceChildren(
       commentInsertionIndex,
       0,
-      defaultValue !== undefined
+      defaultValue != null
         ? `${option.description} Default: \`${JSON.stringify(defaultValue)}\`.`
         : option.description,
     );

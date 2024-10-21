@@ -65,8 +65,8 @@ function arraysAreEqual<T>(
 ): boolean {
   return (
     a === b ||
-    (a !== undefined &&
-      b !== undefined &&
+    (a != null &&
+      b != null &&
       a.length === b.length &&
       a.every((x, idx) => eq(x, b[idx])))
   );
@@ -79,7 +79,7 @@ function findFirstResult<T, U>(
 ): U | undefined {
   for (const element of inputs) {
     const result = getResult(element);
-    if (result !== undefined) {
+    if (result != null) {
       return result;
     }
   }

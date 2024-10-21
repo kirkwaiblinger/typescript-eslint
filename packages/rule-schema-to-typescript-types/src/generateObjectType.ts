@@ -17,7 +17,7 @@ export function generateObjectType(
   let indexSignature: AST | null = null;
   if (
     schema.additionalProperties === true ||
-    schema.additionalProperties === undefined
+    schema.additionalProperties == null
   ) {
     indexSignature = {
       commentLines: [],

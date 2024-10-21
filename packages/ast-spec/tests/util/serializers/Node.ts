@@ -63,7 +63,7 @@ const serializer: NewPlugin = {
 
     for (const key of keys) {
       const value = node[key];
-      if (value === undefined) {
+      if (value == null) {
         continue;
       }
 

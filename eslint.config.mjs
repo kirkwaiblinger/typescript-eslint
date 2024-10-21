@@ -192,6 +192,7 @@ export default tseslint.config(
         'error',
       '@typescript-eslint/internal/no-typescript-default-import': 'error',
       '@typescript-eslint/internal/prefer-ast-types-enum': 'error',
+      '@typescript-eslint/internal/better-eqeqeq': 'error',
 
       //
       // eslint-base

@@ -773,13 +773,13 @@ export function firstDefined<T, U>(
   array: readonly T[] | undefined,
   callback: (element: T, index: number) => U | undefined,
 ): U | undefined {
-  if (array === undefined) {
+  if (array == null) {
     return undefined;
   }
 
   for (let i = 0; i < array.length; i++) {
     const result = callback(array[i], i);
-    if (result !== undefined) {
+    if (result != null) {
       return result;
     }
   }
@@ -819,7 +819,7 @@ export function isThisInTypeQuery(node: ts.Node): boolean {
 
 // `ts.nodeIsMissing`
 function nodeIsMissing(node: ts.Node | undefined): boolean {
-  if (node === undefined) {
+  if (node == null) {
     return true;
   }
   return (

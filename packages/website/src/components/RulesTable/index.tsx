@@ -184,7 +184,7 @@ export default function RulesTable(): React.JSX.Element {
           match(filters.typeInformation, !!r.docs.requiresTypeChecking),
           match(filters.extension, !!r.docs.extendsBaseRule),
           match(filters.deprecated, !!r.deprecated),
-        ].filter((o): o is boolean => o !== undefined);
+        ].filter((o): o is boolean => o != null);
         return opinions.every(o => o);
       }),
     [rules, filters],

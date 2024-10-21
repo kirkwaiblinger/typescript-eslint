@@ -94,7 +94,7 @@ function analyze(
     jsxFragmentName:
       providedOptions?.jsxFragmentName ?? DEFAULT_OPTIONS.jsxFragmentName,
     jsxPragma:
-      providedOptions?.jsxPragma === undefined
+      providedOptions?.jsxPragma == null
         ? DEFAULT_OPTIONS.jsxPragma
         : providedOptions.jsxPragma,
     lib: providedOptions?.lib ?? ['esnext'],

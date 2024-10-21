@@ -149,7 +149,7 @@ function parseForESLint(
       log('Resolved libs from program: %o', analyzeOptions.lib);
     }
     if (
-      analyzeOptions.jsxPragma === undefined &&
+      analyzeOptions.jsxPragma == null &&
       compilerOptions.jsxFactory != null
     ) {
       // in case the user has specified something like "preact.h"
@@ -158,7 +158,7 @@ function parseForESLint(
       log('Resolved jsxPragma from program: %s', analyzeOptions.jsxPragma);
     }
     if (
-      analyzeOptions.jsxFragmentName === undefined &&
+      analyzeOptions.jsxFragmentName == null &&
       compilerOptions.jsxFragmentFactory != null
     ) {
       // in case the user has specified something like "preact.Fragment"

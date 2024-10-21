@@ -51,7 +51,7 @@ function createSerializer<Constructor extends ConstructorSignature>(
       const childIndentation = indentation + config.indent;
       for (const key of keys) {
         let value = thing[key as string];
-        if (value === undefined) {
+        if (value == null) {
           continue;
         }
         if (typeof value === 'function') {

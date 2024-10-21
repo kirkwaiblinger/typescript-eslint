@@ -104,7 +104,7 @@ function deepMerge<First extends object, Second extends object>(
         secondValue!,
         mergeMap,
       );
-    } else if (secondValue === undefined) {
+    } else if (secondValue == null) {
       (result as ObjectLike)[key] = firstValue;
     }
   }
@@ -204,7 +204,7 @@ class InvalidRuleSeverityError extends Error {
 function assertIsRuleSeverity(ruleId: string, value: unknown): void {
   const severity = ruleSeverities.get(value as SharedConfig.RuleLevel);
 
-  if (severity === undefined) {
+  if (severity == null) {
     throw new InvalidRuleSeverityError(ruleId, value);
   }
 }
