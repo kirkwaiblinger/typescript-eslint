@@ -70,7 +70,7 @@ function toLiteralValue(
   | undefined {
   // type.isLiteral() only covers numbers/bigints and strings, hence the rest of the branches.
   if (tsutils.isBooleanLiteralType(type)) {
-    return { value: type.value };
+    return { value: type.intrinsicName === 'true' };
   } else if (type.flags === ts.TypeFlags.Undefined) {
     return { value: undefined };
   } else if (type.flags === ts.TypeFlags.Null) {
@@ -447,24 +447,48 @@ export default createRule<Options, MessageId>({
       const leftType = getConstrainedTypeAtLocation(services, left);
       const rightType = getConstrainedTypeAtLocation(services, right);
 
-      const leftLiteralValue = toLiteralValue(leftType);
-      const rightLiteralValue = toLiteralValue(rightType);
+      const leftLiteralValues = tsutils
+        .unionTypeParts(leftType)
+        .map(t => toLiteralValue(t));
+      const rightLiteralValues = tsutils
+        .unionTypeParts(rightType)
+        .map(t => toLiteralValue(t));
 
-      if (leftLiteralValue != null && rightLiteralValue != null) {
-        const conditionIsTrue = booleanComparison(
-          leftLiteralValue.value,
-          operator,
-          rightLiteralValue.value,
-        );
+      if (
+        leftLiteralValues.every(t => t != null) &&
+        rightLiteralValues.every(t => t != null)
+      ) {
+        let conditionIsTrue: boolean | null = null;
+        for (const leftTypePart of leftLiteralValues) {
+          for (const rightTypePart of rightLiteralValues) {
+            const result = booleanComparison(
+              leftTypePart.value,
+              operator,
+              rightTypePart.value,
+            );
 
-        context.report({
-          node,
-          messageId: 'literalBooleanExpression',
-          data: {
-            trueOrFalse: conditionIsTrue ? 'true' : 'false',
-          },
-        });
-        return;
+            if (conditionIsTrue == null) {
+              conditionIsTrue = result;
+            } else {
+              // eslint-disable-next-line no-lonely-if
+              if (conditionIsTrue !== result) {
+                conditionIsTrue = null;
+                break;
+              }
+            }
+          }
+        }
+
+        if (conditionIsTrue != null) {
+          context.report({
+            node,
+            messageId: 'literalBooleanExpression',
+            data: {
+              trueOrFalse: conditionIsTrue ? 'true' : 'false',
+            },
+          });
+          return;
+        }
       }
 
       // Workaround for https://github.com/microsoft/TypeScript/issues/37160

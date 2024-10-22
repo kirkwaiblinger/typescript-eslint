@@ -68,6 +68,15 @@ switch (b1) {
   default:
 }
     `,
+    {
+      code: `
+declare const b1: boolean;
+switch (b1) {
+  case true:
+  default:
+}
+      `,
+    },
     `
 declare function foo(): number | void;
 const result1 = foo() === undefined;
@@ -1296,6 +1305,26 @@ function takesMaybeValue(a: null | object) {
       // narrowed to null. always-false because of loose nullish equality
       code: `
 function takesMaybeValue(a: null | object) {
+  if (a) {
+  } else if (a != undefined) {
+  }
+}
+      `,
+      errors: [
+        {
+          column: 14,
+          data: { trueOrFalse: 'false' },
+          endColumn: 28,
+          endLine: 4,
+          line: 4,
+          messageId: 'literalBooleanExpression',
+        },
+      ],
+    },
+    {
+      // narrowed to null. always-false because of loose nullish equality
+      code: `
+function takesMaybeValue(a: null | object | undefined) {
   if (a) {
   } else if (a != undefined) {
   }
