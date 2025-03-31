@@ -823,12 +823,13 @@ function collectVariables<
 >(
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
 ): VariableAnalysis {
+  ESLintUtils.nullThrows(
+    context.sourceCode.scopeManager,
+    'Missing required scope manager',
+  );
   return UnusedVarsVisitor.collectUnusedVariables(
     context.sourceCode.ast,
-    ESLintUtils.nullThrows(
-      context.sourceCode.scopeManager,
-      'Missing required scope manager',
-    ),
+    context.sourceCode.scopeManager,
   );
 }
 

@@ -18,7 +18,7 @@ export * from './misc';
 export * from './needsPrecedingSemiColon';
 export * from './objectIterators';
 export * from './scopeUtils';
-export * from './types';
+export type * from './types';
 export * from './isAssignee';
 export * from './getFixOrSuggest';
 export * from './isArrayMethodCallWithPredicate';
@@ -30,9 +30,11 @@ const {
   deepMerge,
   isObjectNotArray,
   getParserServices,
-  nullThrows,
+  // nullThrows,
   NullThrowsReasons,
 } = ESLintUtils;
+const nullThrows: <T>(x: T, y: string) => asserts x is NonNullable<T> =
+  ESLintUtils.nullThrows;
 type InferMessageIdsTypeFromRule<T> =
   ESLintUtils.InferMessageIdsTypeFromRule<T>;
 type InferOptionsTypeFromRule<T> = ESLintUtils.InferOptionsTypeFromRule<T>;

@@ -67,8 +67,6 @@ export default createRule<Options, MessageIds>({
     },
   ],
   create(context, [options]) {
-    const rules = baseRule.create(context);
-
     const ignored = new Set((options.ignore ?? []).map(normalizeIgnoreValue));
 
     return {

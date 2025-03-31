@@ -125,8 +125,9 @@ export default createRule<[], MessageIds>({
         return undefined;
       }
 
-      const catchVariableOuterWithIncorrectTypes = nullThrows(
-        argument.params.at(0),
+      const catchVariableOuterWithIncorrectTypes = argument.params.at(0);
+      nullThrows(
+        catchVariableOuterWithIncorrectTypes,
         'There should have been at least one parameter for the rule to have flagged.',
       );
 

@@ -140,19 +140,14 @@ export default createRule<[Options], MessageIds>({
         return null;
       }
 
-      const { directive, description } = nullThrows(
-        match.groups,
-        'RegExp should contain groups',
-      );
+      nullThrows(match.groups, 'RegExp should contain groups');
+
+      const { directive, description } = match.groups;
+      nullThrows(directive, 'RegExp should contain "directive" group');
+      nullThrows(description, 'RegExp should contain "description" group');
       return {
-        directive: nullThrows(
-          directive,
-          'RegExp should contain "directive" group',
-        ),
-        description: nullThrows(
-          description,
-          'RegExp should contain "description" group',
-        ),
+        directive,
+        description,
       };
     }
 
@@ -234,12 +229,12 @@ export default createRule<[Options], MessageIds>({
           ) {
             const { minimumDescriptionLength } = options;
             const format = descriptionFormats.get(fullDirective);
+            nullThrows(
+              minimumDescriptionLength,
+              'Expected minimumDescriptionLength to be set',
+            );
             if (
-              getStringLength(description.trim()) <
-              nullThrows(
-                minimumDescriptionLength,
-                'Expected minimumDescriptionLength to be set',
-              )
+              getStringLength(description.trim()) < minimumDescriptionLength
             ) {
               context.report({
                 data: { directive, minimumDescriptionLength },
