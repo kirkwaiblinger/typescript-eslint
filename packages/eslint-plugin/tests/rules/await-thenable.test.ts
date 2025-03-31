@@ -198,6 +198,34 @@ const doSomething = async (
   await callback?.();
 };
     `,
+    {
+      code: `
+Promise.race(...[1, 'a', 3]);
+      `,
+    },
+    {
+      code: `
+Promise.any([1, Promise.resolve(2), 3]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+    },
+    {
+      code: `
+function* generatePromises(): IterableIterator<Promise<number>> {
+  yield Promise.resolve(23);
+  yield Promise.reject(new Error('message'));
+}
+Promise.any(generatePromises());
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+    },
+    {
+      code: `
+const promises = [1, Promise.resolve(2), 3];
+Promise.race(promises);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+    },
   ],
 
   invalid: [
@@ -375,6 +403,140 @@ declare const obj: { a: { b: { c?: () => void } } } | undefined;
       `,
             },
           ],
+        },
+      ],
+    },
+    {
+      code: `
+const values = [1, 2, 3];
+Promise.all(values);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'all' }],
+      errors: [{ messageId: 'nonThenablePromiseAggregator', line: 3 }],
+    },
+    {
+      code: `
+const values = [1, 2, 3];
+Promise.all(values);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+      errors: [{ messageId: 'nonThenablePromiseAggregator', line: 3 }],
+    },
+    {
+      code: `
+Promise.any([...[1, 2, 3]]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'all' }],
+      errors: [{ messageId: 'nonThenablePromiseAggregator', line: 2 }],
+    },
+    {
+      code: `
+Promise.any([...[1, 2, 3]]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+      errors: [{ messageId: 'nonThenablePromiseAggregator', line: 2 }],
+    },
+    {
+      code: `
+Promise.any([1, 2, 3]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'all' }],
+      errors: [
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 14,
+          endLine: 2,
+          endColumn: 15,
+        },
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 17,
+          endLine: 2,
+          endColumn: 18,
+        },
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 20,
+          endLine: 2,
+          endColumn: 21,
+        },
+      ],
+    },
+    {
+      code: `
+Promise.any([1, 2, 3]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+      errors: [
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 14,
+          endLine: 2,
+          endColumn: 15,
+        },
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 17,
+          endLine: 2,
+          endColumn: 18,
+        },
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 20,
+          endLine: 2,
+          endColumn: 21,
+        },
+      ],
+    },
+    {
+      code: `
+Promise.any([1, Promise.resolve(2), 3]);
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'all' }],
+      errors: [
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 14,
+          endLine: 2,
+          endColumn: 15,
+        },
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+          column: 37,
+          endLine: 2,
+          endColumn: 38,
+        },
+      ],
+    },
+    {
+      code: `
+Promise.allSettled('lol');
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'all' }],
+      errors: [
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
+        },
+      ],
+    },
+    {
+      code: `
+Promise.allSettled('lol');
+      `,
+      options: [{ promiseAggregatorMethodStrictness: 'any' }],
+      errors: [
+        {
+          messageId: 'nonThenablePromiseAggregator',
+          line: 2,
         },
       ],
     },
